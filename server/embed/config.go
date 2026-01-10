@@ -1170,10 +1170,14 @@ func (cfg *Config) InitialClusterFromName(name string) (ret string) {
 	if name == "" {
 		n = DefaultName
 	}
+	var b strings.Builder
 	for i := range cfg.AdvertisePeerUrls {
-		ret = ret + "," + n + "=" + cfg.AdvertisePeerUrls[i].String()
+		b.WriteString(",")
+		b.WriteString(n)
+		b.WriteString("=")
+		b.WriteString(cfg.AdvertisePeerUrls[i].String())
 	}
-	return ret[1:]
+	return b.String()[1:]
 }
 
 // InferLocalAddr tries to determine the LocalAddr used when communicating with

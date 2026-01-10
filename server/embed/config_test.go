@@ -944,3 +944,59 @@ func TestFastLeaseKeepAliveValidate(t *testing.T) {
 		})
 	}
 }
+
+func TestInitialClusterFromName(t *testing.T) {
+tests := []struct {
+name             string
+cfgName          string
+advertisePeerURL string
+want             string
+}{
+{
+name:             "single peer URL with default name",
+cfgName:          "",
+advertisePeerURL: "http://localhost:2380",
+want:             "default=http://localhost:2380",
+},
+{
+name:             "single peer URL with custom name",
+cfgName:          "etcd0",
+advertisePeerURL: "http://localhost:2380",
+want:             "etcd0=http://localhost:2380",
+},
+{
+name:             "empty config",
+cfgName:          "etcd0",
+advertisePeerURL: "",
+want:             "",
+},
+}
+
+for _, tt := range tests {
+t.Run(tt.name, func(t *testing.T) {
+cfg := NewConfig()
+if tt.advertisePeerURL != "" {
+peerURL, err := url.Parse(tt.advertisePeerURL)
+require.NoError(t, err)
+cfg.AdvertisePeerUrls = []url.URL{*peerURL}
+} else {
+cfg.AdvertisePeerUrls = []url.URL{}
+}
+
+got := cfg.InitialClusterFromName(tt.cfgName)
+assert.Equal(t, tt.want, got)
+})
+}
+}
+
+func TestInitialClusterFromNameMultipleURLs(t *testing.T) {
+cfg := NewConfig()
+url1, _ := url.Parse("http://localhost:2380")
+url2, _ := url.Parse("http://localhost:2381")
+url3, _ := url.Parse("http://localhost:2382")
+cfg.AdvertisePeerUrls = []url.URL{*url1, *url2, *url3}
+
+got := cfg.InitialClusterFromName("etcd0")
+want := "etcd0=http://localhost:2380,etcd0=http://localhost:2381,etcd0=http://localhost:2382"
+assert.Equal(t, want, got)
+}
